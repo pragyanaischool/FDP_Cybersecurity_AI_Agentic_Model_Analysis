@@ -170,8 +170,7 @@ if uploaded_file is not None:
 
             result = app.invoke(
                 {
-                    "dataframe": df,
-                    "retriever": retriever
+                "dataframe": df
                 }
             )
 

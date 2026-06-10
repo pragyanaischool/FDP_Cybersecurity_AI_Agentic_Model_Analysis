@@ -1,8 +1,8 @@
 import os
 
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 
-from langchain.text_splitter import (
+from langchain_text_splitters import (
     RecursiveCharacterTextSplitter
 )
 
@@ -14,7 +14,7 @@ from langchain_huggingface import (
 
 
 # =====================================================
-# Load Knowledge Base Files
+# LOAD KNOWLEDGE BASE FILES
 # =====================================================
 
 def load_knowledge_base():
@@ -29,30 +29,39 @@ def load_knowledge_base():
     for file_path in kb_files:
 
         if not os.path.exists(file_path):
+            print(f"Missing file: {file_path}")
             continue
 
-        with open(
-            file_path,
-            "r",
-            encoding="utf-8"
-        ) as f:
+        try:
 
-            text = f.read()
+            with open(
+                file_path,
+                "r",
+                encoding="utf-8"
+            ) as f:
 
-        documents.append(
-            Document(
-                page_content=text,
-                metadata={
-                    "source": file_path
-                }
+                text = f.read()
+
+            documents.append(
+                Document(
+                    page_content=text,
+                    metadata={
+                        "source": file_path
+                    }
+                )
             )
-        )
+
+        except Exception as e:
+
+            print(
+                f"Error reading {file_path}: {e}"
+            )
 
     return documents
 
 
 # =====================================================
-# Split Documents
+# TEXT SPLITTING
 # =====================================================
 
 def split_documents(documents):
@@ -72,7 +81,7 @@ def split_documents(documents):
 
 
 # =====================================================
-# Create Embeddings
+# EMBEDDING MODEL
 # =====================================================
 
 def create_embeddings():
@@ -87,12 +96,22 @@ def create_embeddings():
 
 
 # =====================================================
-# Build Chroma Vector Store
+# CREATE VECTOR DATABASE
 # =====================================================
 
 def build_vector_store():
 
+    print(
+        "Building Chroma Vector Store..."
+    )
+
     documents = load_knowledge_base()
+
+    if len(documents) == 0:
+
+        raise ValueError(
+            "Knowledge base is empty."
+        )
 
     chunks = split_documents(
         documents
@@ -109,14 +128,18 @@ def build_vector_store():
         persist_directory="./chroma_db"
     )
 
+    print(
+        "Vector Store Created Successfully"
+    )
+
     return vectordb
 
 
 # =====================================================
-# Get Retriever
+# LOAD EXISTING VECTOR STORE
 # =====================================================
 
-def get_retriever():
+def load_vector_store():
 
     embeddings = create_embeddings()
 
@@ -126,6 +149,17 @@ def get_retriever():
 
         embedding_function=embeddings
     )
+
+    return vectordb
+
+
+# =====================================================
+# GET RETRIEVER
+# =====================================================
+
+def get_retriever():
+
+    vectordb = load_vector_store()
 
     retriever = vectordb.as_retriever(
 
@@ -140,29 +174,37 @@ def get_retriever():
 
 
 # =====================================================
-# Initialize KB
+# INITIALIZE VECTOR STORE
 # =====================================================
 
 def initialize_vector_store():
 
-    if not os.path.exists("./chroma_db"):
+    db_path = "./chroma_db"
+
+    try:
+
+        if not os.path.exists(db_path):
+
+            print(
+                "Creating new vector database..."
+            )
+
+            build_vector_store()
+
+        else:
+
+            print(
+                "Existing vector database found."
+            )
+
+        retriever = get_retriever()
+
+        return retriever
+
+    except Exception as e:
 
         print(
-            "Creating Vector Database..."
+            f"Vector Store Error: {e}"
         )
 
-        build_vector_store()
-
-        print(
-            "Vector Database Created."
-        )
-
-    else:
-
-        print(
-            "Using Existing Vector Database."
-        )
-
-    retriever = get_retriever()
-
-    return retriever
+        raise e

@@ -1,0 +1,65 @@
+Threat,Category,Risk_Level,MITRE_Technique,Description,Indicators,Recommended_Action
+
+Password Spraying,Credential Access,High,T1110.003,Attempts common passwords against multiple accounts to avoid lockouts,Multiple failed logins across many users,Enable MFA Block Source IP Force Password Reset
+
+Brute Force,Credential Access,High,T1110.001,Attempts many passwords against a single account,High number of failures against one user,Lock Account Investigate Source IP
+
+Credential Stuffing,Credential Access,Critical,T1078,Uses stolen usernames and passwords from breaches,Successful logins after multiple attempts from unusual IPs,Force Password Reset Enable MFA
+
+Account Takeover,Credential Access,Critical,T1078,Attacker gains access using valid credentials,Login from unusual locations Impossible Travel Events,Disable Account Investigate Activity
+
+Phishing,Initial Access,High,T1566,Tricks users into revealing credentials or executing malware,Suspicious email links attachments user reports,Conduct Awareness Training Reset Credentials
+
+Spear Phishing,Initial Access,Critical,T1566.001,Targeted phishing campaign against specific users,Targeted emails executive impersonation,Investigate Mailboxes Reset Credentials
+
+Business Email Compromise,Credential Access,Critical,T1078,Compromised email account used for fraud,Unusual email forwarding financial requests,Disable Account Review Mail Rules
+
+Privilege Escalation,Privilege Escalation,Critical,T1548,Attacker gains elevated permissions,Unexpected admin rights privileged commands,Audit Permissions Investigate Admin Accounts
+
+Lateral Movement,Lateral Movement,Critical,T1021,Movement across systems after initial compromise,RDP SSH SMB activity across hosts,Isolate Endpoint Review Access Logs
+
+Remote Service Abuse,Lateral Movement,High,T1021,Use of remote services to move laterally,Unexpected remote sessions,Investigate Endpoints Restrict Access
+
+Service Account Abuse,Persistence,High,T1078,Service accounts used interactively by attackers,Interactive login from service accounts,Disable Account Investigate Credentials
+
+Persistence Mechanism,Persistence,High,T1547,Attacker establishes long term access,Unexpected startup tasks registry modifications,Remove Persistence Audit Systems
+
+Malware Execution,Execution,High,T1059,Malicious code execution on endpoints,Unknown processes PowerShell scripts,Isolate Endpoint Scan System
+
+PowerShell Abuse,Execution,High,T1059.001,Abuse of PowerShell for malicious activity,Suspicious PowerShell commands encoded scripts,Restrict PowerShell Investigate Host
+
+Command Execution,Execution,Medium,T1059,Shell commands executed by attacker,Unusual command line activity,Review Process Activity
+
+Network Discovery,Discovery,Medium,T1046,Scanning and identifying network services,Port scans service enumeration,Investigate Source Host
+
+Account Discovery,Discovery,Medium,T1087,Enumeration of users and accounts,Multiple account lookup events,Monitor User Enumeration
+
+Credential Dumping,Credential Access,Critical,T1003,Extraction of credentials from memory or storage,LSASS access dumping tools,Isolate Host Reset Credentials
+
+Kerberoasting,Credential Access,Critical,T1558.003,Extraction of Kerberos service tickets for cracking,Abnormal Kerberos ticket requests,Review Service Accounts Rotate Passwords
+
+Pass The Hash,Credential Access,Critical,T1550.002,Reuse of password hashes for authentication,Authentication without password usage,Investigate Host Reset Credentials
+
+Data Exfiltration,Exfiltration,Critical,T1041,Unauthorized transfer of sensitive information,Large outbound transfers unusual destinations,Block Transfers Investigate User
+
+Cloud Account Compromise,Credential Access,Critical,T1078,Compromise of cloud identities and accounts,Impossible travel MFA bypass events,Disable Account Review Cloud Logs
+
+Insider Threat,Impact,High,T1534,Malicious activity by internal users,Unauthorized data access downloads,Investigate User Activity
+
+Ransomware,Impact,Critical,T1486,Encryption of files and systems for extortion,Mass file changes encryption activity,Isolate Systems Activate IR Plan
+
+Data Destruction,Impact,Critical,T1485,Deletion or corruption of data,Unexpected file deletions system damage,Contain Host Restore Backups
+
+Log Tampering,Defense Evasion,High,T1070,Deletion or modification of logs,Missing log entries cleared logs,Investigate Host Preserve Evidence
+
+Defense Evasion,Defense Evasion,High,T1070,Attacker attempts to hide activity,Disabled security tools log removal,Restore Controls Investigate System
+
+VPN Abuse,Initial Access,High,T1078,Unauthorized use of VPN credentials,VPN access from unusual geographies,Disable Account Review VPN Logs
+
+Impossible Travel,Credential Access,High,T1078,User appears to log in from distant locations within short time,Multiple countries within impossible timeframe,Force Password Reset Investigate User
+
+Botnet Activity,Command and Control,Critical,T1105,Compromised hosts communicating with C2 infrastructure,Connections to known malicious domains,Block Traffic Investigate Hosts
+
+Command And Control,Command and Control,Critical,T1105,Persistent communication with attacker infrastructure,Beaconing behavior recurring connections,Block Domains Investigate Endpoints
+
+Zero Day Exploitation,Initial Access,Critical,T1190,Exploitation of unknown vulnerability,Unexpected service crashes exploitation attempts,Patch Systems Investigate Hosts

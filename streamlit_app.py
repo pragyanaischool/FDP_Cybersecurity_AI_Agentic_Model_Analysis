@@ -8,6 +8,7 @@ from rag.vector_store import (
     initialize_vector_store
 )
 
+
 # =====================================================
 # PAGE CONFIG
 # =====================================================
@@ -18,8 +19,36 @@ st.set_page_config(
     layout="wide"
 )
 
+
 # =====================================================
-# TITLE
+# SESSION STATE
+# =====================================================
+
+if "df" not in st.session_state:
+    st.session_state.df = None
+
+if "uploaded_filename" not in st.session_state:
+    st.session_state.uploaded_filename = None
+
+if "investigation_result" not in st.session_state:
+    st.session_state.investigation_result = None
+
+
+# =====================================================
+# LOAD RETRIEVER
+# =====================================================
+
+@st.cache_resource
+def load_retriever():
+
+    return initialize_vector_store()
+
+
+retriever = load_retriever()
+
+
+# =====================================================
+# HEADER
 # =====================================================
 
 st.title(
@@ -47,32 +76,46 @@ uploaded_file = st.sidebar.file_uploader(
 )
 
 # =====================================================
-# LOAD VECTOR DB
-# =====================================================
-
-@st.cache_resource
-def load_retriever():
-
-    return initialize_vector_store()
-
-retriever = load_retriever()
-
-# =====================================================
-# PROCESS LOG FILE
+# FILE MEMORY
 # =====================================================
 
 if uploaded_file is not None:
 
-    df = pd.read_csv(
-        uploaded_file
-    )
+    try:
 
-    st.success(
-        "Log file uploaded successfully"
+        df = pd.read_csv(uploaded_file)
+
+        st.session_state.df = df
+
+        st.session_state.uploaded_filename = (
+            uploaded_file.name
+        )
+
+        st.sidebar.success(
+            f"Loaded: {uploaded_file.name}"
+        )
+
+    except Exception as e:
+
+        st.error(
+            f"File Error: {str(e)}"
+        )
+
+# =====================================================
+# USE SAVED FILE
+# =====================================================
+
+if st.session_state.df is not None:
+
+    df = st.session_state.df
+
+    st.info(
+        f"Using File: "
+        f"{st.session_state.uploaded_filename}"
     )
 
     # =================================================
-    # DASHBOARD
+    # KPI DASHBOARD
     # =================================================
 
     st.header(
@@ -157,7 +200,7 @@ if uploaded_file is not None:
         )
 
     # =================================================
-    # RUN AI INVESTIGATION
+    # INVESTIGATION BUTTON
     # =================================================
 
     if st.button(
@@ -168,19 +211,41 @@ if uploaded_file is not None:
             "Running AI Agents..."
         ):
 
-            result = app.invoke(
-                {
-                "dataframe": df
-                }
-            )
+            try:
 
-        st.success(
-            "Investigation Completed"
+                result = app.invoke(
+                    {
+                        "dataframe": df,
+                        "retriever": retriever
+                    }
+                )
+
+                st.session_state.investigation_result = (
+                    result
+                )
+
+                st.success(
+                    "Investigation Completed"
+                )
+
+            except Exception as e:
+
+                st.error(
+                    f"Investigation Error:\n{str(e)}"
+                )
+
+    # =================================================
+    # SHOW PREVIOUS RESULT
+    # =================================================
+
+    if (
+        st.session_state.investigation_result
+        is not None
+    ):
+
+        result = (
+            st.session_state.investigation_result
         )
-
-        # =============================================
-        # AGENT OUTPUTS
-        # =============================================
 
         st.header(
             "AI Investigation Results"
@@ -188,40 +253,68 @@ if uploaded_file is not None:
 
         tab1, tab2, tab3, tab4 = st.tabs(
             [
-                "Report",
+                "SOC Report",
                 "MITRE",
                 "Threat Intel",
-                "Executive Summary"
+                "Executive"
             ]
         )
+
+        # =============================================
+        # REPORT
+        # =============================================
 
         with tab1:
 
             st.text_area(
                 "SOC Report",
-                result["report"],
+                result.get(
+                    "report",
+                    ""
+                ),
                 height=500
             )
+
+        # =============================================
+        # MITRE
+        # =============================================
 
         with tab2:
 
             st.json(
-                result["mitre"]
+                result.get(
+                    "mitre",
+                    {}
+                )
             )
+
+        # =============================================
+        # THREAT INTEL
+        # =============================================
 
         with tab3:
 
             st.text_area(
                 "Threat Intelligence",
-                result["threat_intel"],
+                result.get(
+                    "threat_intel",
+                    ""
+                ),
                 height=250
             )
+
+        # =============================================
+        # EXECUTIVE
+        # =============================================
 
         with tab4:
 
             st.text_area(
                 "Executive Summary",
-                result["executive_summary"],
+                result.get(
+                    "executive_summary",
+                    ""
+                ),
                 height=250
             )
 
@@ -229,16 +322,20 @@ if uploaded_file is not None:
         # RISK SCORE
         # =============================================
 
+        risk_score = result.get(
+            "risk_score",
+            0
+        )
+
         st.header(
             "Risk Assessment"
         )
 
-        risk_score = result[
-            "risk_score"
-        ]
-
         st.progress(
-            risk_score / 100
+            min(
+                risk_score / 100,
+                1.0
+            )
         )
 
         st.metric(
@@ -247,20 +344,27 @@ if uploaded_file is not None:
         )
 
         # =============================================
-        # DOWNLOAD REPORT
+        # DOWNLOAD
         # =============================================
 
         st.download_button(
-            label="Download SOC Report",
-            data=result["report"],
+            label="Download Report",
+            data=result.get(
+                "report",
+                ""
+            ),
             file_name="soc_report.txt",
             mime="text/plain"
         )
 
+# =====================================================
+# EMPTY STATE
+# =====================================================
+
 else:
 
     st.info(
-        "Upload a CSV log file to begin investigation."
+        "Upload a CSV file to begin."
     )
 
 # =====================================================
@@ -270,5 +374,6 @@ else:
 st.markdown("---")
 
 st.caption(
-    "Autonomous Multi-Agent AI SOC | GenAI + LangGraph + RAG"
+    "Autonomous Multi-Agent AI SOC | "
+    "LangGraph + RAG + Streamlit"
 )

@@ -14,22 +14,44 @@ from langchain_huggingface import (
 
 
 # =====================================================
-# LOAD KNOWLEDGE BASE FILES
+# LOAD KNOWLEDGE BASE
 # =====================================================
 
 def load_knowledge_base():
 
     documents = []
 
+    current_dir = os.path.dirname(
+        os.path.abspath(__file__)
+    )
+
+    project_root = os.path.dirname(
+        current_dir
+    )
+
     kb_files = [
-        "knowledge_base/mitre_attack.csv",
-        "knowledge_base/threat_intelligence.csv"
+
+        os.path.join(
+            project_root,
+            "knowledge_base",
+            "mitre_attack.csv"
+        ),
+
+        os.path.join(
+            project_root,
+            "knowledge_base",
+            "threat_intelligence.csv"
+        )
     ]
 
     for file_path in kb_files:
 
         if not os.path.exists(file_path):
-            print(f"Missing file: {file_path}")
+
+            print(
+                f"Missing KB File: {file_path}"
+            )
+
             continue
 
         try:
@@ -43,8 +65,11 @@ def load_knowledge_base():
                 text = f.read()
 
             documents.append(
+
                 Document(
+
                     page_content=text,
+
                     metadata={
                         "source": file_path
                     }
@@ -57,11 +82,46 @@ def load_knowledge_base():
                 f"Error reading {file_path}: {e}"
             )
 
+    # -----------------------------------------
+    # Fallback if KB is empty
+    # -----------------------------------------
+
+    if len(documents) == 0:
+
+        documents = [
+
+            Document(
+
+                page_content="""
+Password Spraying
+
+Attempts common passwords
+against many user accounts.
+
+Indicators
+
+- Multiple failed logins
+- Same source IP
+- Many target accounts
+
+Recommended Actions
+
+- Enable MFA
+- Reset Passwords
+- Block Source IP
+""",
+
+                metadata={
+                    "source": "default"
+                }
+            )
+        ]
+
     return documents
 
 
 # =====================================================
-# TEXT SPLITTING
+# SPLIT DOCUMENTS
 # =====================================================
 
 def split_documents(documents):
@@ -73,45 +133,31 @@ def split_documents(documents):
         chunk_overlap=50
     )
 
-    chunks = splitter.split_documents(
+    return splitter.split_documents(
         documents
     )
 
-    return chunks
-
 
 # =====================================================
-# EMBEDDING MODEL
+# EMBEDDINGS
 # =====================================================
 
 def create_embeddings():
 
-    embeddings = HuggingFaceEmbeddings(
+    return HuggingFaceEmbeddings(
 
         model_name=
         "sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    return embeddings
-
 
 # =====================================================
-# CREATE VECTOR DATABASE
+# BUILD VECTOR STORE
 # =====================================================
 
 def build_vector_store():
 
-    print(
-        "Building Chroma Vector Store..."
-    )
-
     documents = load_knowledge_base()
-
-    if len(documents) == 0:
-
-        raise ValueError(
-            "Knowledge base is empty."
-        )
 
     chunks = split_documents(
         documents
@@ -128,15 +174,11 @@ def build_vector_store():
         persist_directory="./chroma_db"
     )
 
-    print(
-        "Vector Store Created Successfully"
-    )
-
     return vectordb
 
 
 # =====================================================
-# LOAD EXISTING VECTOR STORE
+# LOAD VECTOR STORE
 # =====================================================
 
 def load_vector_store():
@@ -186,16 +228,10 @@ def initialize_vector_store():
         if not os.path.exists(db_path):
 
             print(
-                "Creating new vector database..."
+                "Creating ChromaDB..."
             )
 
             build_vector_store()
-
-        else:
-
-            print(
-                "Existing vector database found."
-            )
 
         retriever = get_retriever()
 
@@ -207,4 +243,4 @@ def initialize_vector_store():
             f"Vector Store Error: {e}"
         )
 
-        raise e
+        return None
